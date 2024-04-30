@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>View-Transition-API</title>
+  <style>
+    :root {
+      --background-color: #ffffff;
+      background-color: var(--background-color);
+    }
+    :root.dark {
+      --background-color: #000000;
+      background-color: var(--background-color);
+    }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+
+    ::view-transition-old(root),
+    .dark::view-transition-new(root) {
+      z-index: 1;
+    }
+
+    ::view-transition-new(root),
+    .dark::view-transition-old(root) {
+      z-index: 2147483646;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <button id="btn">Toggle Class</button>
+</body>
+</html>
+<script>
+  let isDarkMode = false;
+  const btn = document.querySelector('button')
+  btn.addEventListener('click', function(e) {
+    const transition = document.startViewTransition(function() {
+      document.documentElement.classList.toggle('dark')
+      isDarkMode = document.documentElement.classList.contains('dark')
+    })
+
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    const distance = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    )
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${distance}px at ${x}px ${y}px)`,
+      ]
+      document.documentElement.animate(
+      {
+        clipPath: isDarkMode ? [...clipPath].reverse() : clipPath,
+      },
+      {
+        duration: 400,
+        easing: 'ease-in',
+        pseudoElement: isDarkMode
+          ? '::view-transition-old(root)'
+          : '::view-transition-new(root)',
+      })
+    })
+  })
+</script>
